@@ -1,10 +1,11 @@
-const Product = require('../models/products');
-const { matchedData } = require('express-validator');
+const Product = require('../models/products'); // Importation du modèle Product
+const { matchedData } = require('express-validator'); // Importation de matchedData pour valider les données
 
+// Fonction pour obtenir tous les produits
 exports.getProducts = (req, res, next) => {
-  Product.find()
+  Product.find() // Recherche tous les produits dans la base de données
     .then((posts) => {
-      res.status(200).json({ message: 'Fetched product successfully.', posts: posts });
+      res.status(200).json({ message: 'Fetched product successfully.', posts: posts }); // Répond avec les produits trouvés
     })
     .catch((err) => {
       if (!err.statusCode) {
@@ -14,15 +15,15 @@ exports.getProducts = (req, res, next) => {
     });
 };
 
+// Fonction pour obtenir un produit par ID
 exports.getByID = async (req, res, next) => {
-  const productID = req.params.id;
-  Product.findById(productID)
+  const productID = req.params.id; // Récupère l'ID du produit depuis les paramètres de la requête
+  Product.findById(productID) // Recherche le produit par ID
     .then((product) => {
-      //verifier si le post est correct
-      const matchData = matchedData(req);
+      const matchData = matchedData(req); // Validation des données de la requête
       if (!matchData) {
         return res.json({
-          message: 'id note found',
+          message: 'id not found',
         });
       }
 
@@ -39,9 +40,10 @@ exports.getByID = async (req, res, next) => {
     });
 };
 
+// Fonction pour obtenir un produit par nom
 exports.getByName = async (req, res, next) => {
-  const productName = req.params.name;
-  Product.find({ name: productName })
+  const productName = req.params.name; // Récupère le nom du produit depuis les paramètres de la requête
+  Product.find({ name: productName }) // Recherche le produit par nom
     .then((product) => {
       if (product.length === 0) {
         // Aucun produit correspondant n'a été trouvé
@@ -64,8 +66,10 @@ exports.getByName = async (req, res, next) => {
     });
 };
 
+// Fonction pour créer un nouveau produit
 exports.createProduct = async (req, res) => {
-  const name = req.body.name;
+  const name = req.body.name; // Récupère les données du corps de la requête
+  const mail = req.body.mail;
   const depart = req.body.depart;
   const car = req.body.car;
   const heure = req.body.heure;
@@ -73,11 +77,9 @@ exports.createProduct = async (req, res) => {
   const distance = req.body.distance;
   const place = req.body.place;
 
-  //TO DO: ajouter des controles...
-
-  // Creates a post in a mongo database
   const product = new Product({
     name: name,
+    mail: mail,
     depart: depart,
     car: car,
     heure: heure,
@@ -87,7 +89,7 @@ exports.createProduct = async (req, res) => {
   });
 
   product
-    .save()
+    .save() // Enregistre le produit dans la base de données
     .then((result) => {
       res.status(201).json({
         message: 'Products created successfully',
@@ -96,13 +98,15 @@ exports.createProduct = async (req, res) => {
     })
     .catch((error) => {
       console.log('error: ', error);
-      //envoyer une réponse approprié
+      // Envoyer une réponse appropriée en cas d'erreur
     });
 };
 
+// Fonction pour mettre à jour un produit
 exports.updateProduct = async (req, res) => {
   const product = await Product.findByIdAndUpdate(req.params.id, {
     name: req.body.name,
+    mail: req.body.mail,
     depart: req.body.depart,
     car: req.body.car,
     heure: req.body.heure,
@@ -118,12 +122,13 @@ exports.updateProduct = async (req, res) => {
     })
     .catch((error) => {
       console.log('error: ', error);
-      //envoyer une réponse approprié
+      // Envoyer une réponse appropriée en cas d'erreur
     });
 };
 
+// Fonction pour supprimer un produit
 exports.deleteProduct = async (req, res) => {
-  const product = await Product.findByIdAndDelete(req.params.id)
+  const product = await Product.findOneAndDelete(req.body.name)
     .then((result) => {
       res.status(200).json({
         message: 'Products deleted successfully',
@@ -132,6 +137,31 @@ exports.deleteProduct = async (req, res) => {
     })
     .catch((error) => {
       console.log('error: ', error);
-      //envoyer une réponse approprié
     });
+};
+
+// Fonction pour supprimer un produit par nom
+exports.deleteProductByName = async (req, res) => {
+  try {
+    console.log("Nom de l'utilisateur à supprimer :", req.params.name);
+    const product = await Product.findOneAndDelete({ name: ObjectName(req.params) });
+    console.log('Produit supprimé :', product);
+    if (product) {
+      // Suppression réussie
+      res.status(200).json({
+        message: 'Product deleted successfully',
+        post: product,
+      });
+    } else {
+      // Aucun produit correspondant trouvé
+      res.status(404).json({
+        message: 'Product not found',
+      });
+    }
+  } catch (error) {
+    console.error("Erreur lors de la suppression de l'annonce", error);
+    res.status(500).json({
+      message: 'Internal server error',
+    });
+  }
 };

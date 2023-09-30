@@ -1,43 +1,25 @@
+// Importation du module jsonwebtoken pour gérer les jetons JWT (JSON Web Tokens)
 const jwt = require('jsonwebtoken');
 
-/*module.exports = (req, res, next) => {
-  const authHeader = req.get('Authorization');
-  if (!authHeader) {
-    const error = new Error('Not authenticated.');
-    error.statusCode = 401;
-    throw error;
-  }
-  const token = authHeader.split(' ')[1];
-  let decodedToken;
-  try {
-    decodedToken = jwt.verify(token, process.env['JWTKey ']);
-  } catch (err) {
-    err.statusCode = 500;
-    throw err;
-  }
-  if (!decodedToken) {
-    const error = new Error('Not authenticated.');
-    error.statusCode = 401;
-    throw error;
-  }
-  req.userId = decodedToken.userId;
-  next();
-};*/
-
+// Exportation du middleware qui vérifie l'authentification de l'utilisateur
 module.exports = async (req, res, next) => {
   try {
-    const token = await req.headers.authorization.split(" ")[1];
+    // Récupération du jeton d'authentification depuis l'en-tête de la requête
+    const token = await req.headers.authorization.split(' ')[1];
 
-    const decodedToken = await jwt.verify(
-        token,
-        process.env.JWT_KEY
-    );
+    // Vérification et décryptage du jeton en utilisant la clé secrète JWT (process.env.JWT_KEY)
+    const decodedToken = await jwt.verify(token, process.env.JWT_KEY);
+
+    // Stockage des données de l'utilisateur extraites du jeton dans req.user
     const user = await decodedToken;
-    req.user = user
+    req.user = user;
+
+    // Passage au middleware suivant
     next();
   } catch (err) {
+    // En cas d'erreur lors de la vérification du jeton
     res.status(401).json({
-      err: new Error("Invalid request !")
-    })
+      err: new Error('Invalid request !'),
+    });
   }
-}
+};
